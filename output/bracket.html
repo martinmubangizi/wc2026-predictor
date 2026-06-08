@@ -13,7 +13,7 @@
   --FD:'Anton',sans-serif;--FU:'Barlow Condensed',sans-serif;--FB:'Space Grotesk',sans-serif;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth;overflow-x:hidden}
+html,body{scroll-behavior:smooth;overflow-x:hidden;max-width:100%}
 body{background:var(--wh);color:var(--obs);font-family:var(--FB)}
 [data-r]{opacity:0;transform:translateY(28px);transition:opacity .6s cubic-bezier(.22,1,.36,1),transform .6s cubic-bezier(.22,1,.36,1)}
 [data-r=l]{transform:translateX(-32px)}[data-r=r]{transform:translateX(32px)}
@@ -45,7 +45,7 @@ body{background:var(--wh);color:var(--obs);font-family:var(--FB)}
 .btn:hover{transform:translateY(-2px)}
 .bm{background:var(--mg);color:var(--wh)}.bm:hover{box-shadow:0 8px 24px rgba(255,0,85,.35)}
 .bo{background:transparent;color:var(--obs);border:2px solid var(--obs)}.bo:hover{background:var(--obs);color:var(--wh)}
-.hstats{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--gap);margin-top:40px;padding-top:24px;border-top:1px solid rgba(11,12,16,.08)}
+.hstats{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-top:32px;padding-top:20px;border-top:1px solid rgba(11,12,16,.08)}
 .hsv{font-family:var(--FD);font-size:32px;color:var(--mg);line-height:1}
 .hsl{font-family:var(--FU);font-size:9px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--mut);margin-top:3px}
 
@@ -62,10 +62,10 @@ body{background:var(--wh);color:var(--obs);font-family:var(--FB)}
 
 .winner-name{font-family:var(--FD);font-size:52px;letter-spacing:2px;text-transform:uppercase;color:var(--wh);line-height:1;margin-bottom:5px}
 .winner-pct{font-family:var(--FU);font-size:16px;font-weight:700;color:rgba(255,255,255,.85);letter-spacing:2px;margin-bottom:18px}
-.wmini{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--gap);width:100%}
-.wm{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);padding:10px 6px;text-align:center}
-.wmv{font-family:var(--FD);font-size:20px;color:var(--pac);line-height:1}
-.wml{font-family:var(--FU);font-size:8px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.3);margin-top:2px}
+.wmini{display:flex;gap:0;width:100%;border-top:1px solid rgba(255,255,255,.1);padding-top:14px;margin-top:4px}
+.wm{padding:10px 16px 10px 0;text-align:left}
+.wmv{font-family:var(--FD);font-size:22px;color:var(--wh);line-height:1}
+.wml{font-family:var(--FU);font-size:8px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.4);margin-top:2px}
 
 /* TICKER */
 .ticker{background:var(--mg);overflow:hidden;height:34px;display:flex;align-items:center;border-bottom:2px solid rgba(0,0,0,.15)}
@@ -266,6 +266,8 @@ body{background:var(--wh);color:var(--obs);font-family:var(--FB)}
 .flinks{display:flex;flex-direction:column;gap:8px}
 .flinks a{font-size:13px;color:rgba(255,255,255,.4);text-decoration:none;transition:color .15s;display:flex;align-items:center;gap:7px}
 .flinks a:hover{color:var(--wh)}.flinks a::before{content:'→';color:var(--mg);font-size:11px}
+.vote-grid{display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:start}
+.vote-input-row{display:flex;gap:var(--gap)}
 .fstack{display:flex;flex-direction:column;gap:8px}.fstack span{font-size:13px;color:rgba(255,255,255,.4);display:flex;align-items:center;gap:7px}.fstack span::before{content:'·';color:var(--mg);font-size:13px}
 .fbot{display:flex;align-items:center;justify-content:space-between;border-top:1px solid rgba(255,255,255,.06);padding-top:22px;gap:20px}
 .fdis{font-size:11px;color:rgba(255,255,255,.18);line-height:1.6;max-width:460px}
@@ -273,7 +275,9 @@ body{background:var(--wh);color:var(--obs);font-family:var(--FB)}
 .fgit:hover{color:var(--pac)}
 
 @media(max-width:960px){
-  .hero{grid-template-columns:1fr;min-height:auto}.hslash{display:none}.hright{min-height:300px}
+  html,body{overflow-x:hidden}
+  .hero{grid-template-columns:1fr;min-height:auto;overflow:hidden}.hslash{display:none}.hright{display:none}
+  .vote-grid{display:flex;flex-direction:column;gap:24px}
   .hleft{padding:88px 28px 56px}
   .sec{padding:48px 24px}.bracket-section{padding:48px 24px}
   .fg{grid-template-columns:repeat(2,1fr)}
@@ -286,6 +290,15 @@ body{background:var(--wh);color:var(--obs);font-family:var(--FB)}
   .rounds{grid-template-columns:1fr 1fr auto}
 }
 @media(max-width:600px){
+  html,body{overflow-x:hidden!important;max-width:100vw!important}
+  .hero{grid-template-columns:1fr!important;overflow:hidden}
+  .hright{display:none!important}
+  .hslash{display:none!important}
+  .vote-grid{grid-template-columns:1fr!important;display:flex!important;flex-direction:column!important;gap:24px!important}
+  #voteResults{width:100%!important}
+  select,button{width:100%!important;max-width:100%!important}
+  *{max-width:100vw}
+  .sdiv{overflow:hidden}
   .hh1{font-size:56px;letter-spacing:-1px}
   .fg{grid-template-columns:1fr}
   .gg{grid-template-columns:repeat(2,1fr)}
@@ -307,6 +320,9 @@ body{background:var(--wh);color:var(--obs);font-family:var(--FB)}
   .fdis{max-width:100%}
   .elimstrip{flex-direction:column;align-items:flex-start;gap:8px}
   .acounts{flex-direction:column}
+  .vote-input-row{flex-direction:column}
+  .vote-input-row select,.vote-input-row button{width:100%}
+  .vote-grid{grid-template-columns:1fr}
 }
 </style>
 </head>
@@ -446,7 +462,7 @@ body{background:var(--wh);color:var(--obs);font-family:var(--FB)}
   <h2 class="sec-h2" data-r style="margin-bottom:4px">The Road to the Final</h2>
   <p class="sec-sub" data-r>Most probable teams at each knockout stage across 15,000 simulations.</p>
 
-  <div style="overflow-x:auto;padding-bottom:8px">
+  <div style="overflow-x:auto;padding-bottom:8px;-webkit-overflow-scrolling:touch;max-width:calc(100vw - 36px)">
   <div style="min-width:1100px;position:relative">
 
     <!-- ROUND LABELS -->
@@ -625,12 +641,12 @@ window.addEventListener('resize',drawBracketLines);
   <h2 class="sec-h2" data-r style="color:var(--wh)">Your Prediction</h2>
   <p class="sec-sub" data-r>Pick the country you think will win the 2026 World Cup. No sign-in required.</p>
 
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:start" data-r>
+  <div class="vote-grid" data-r>
 
     <!-- VOTE FORM -->
     <div>
       <div style="font-family:var(--FU);font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:12px">Select your pick</div>
-      <div style="display:flex;gap:var(--gap)">
+      <div class="vote-input-row">
         <select id="voteSelect" style="flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:var(--wh);font-family:var(--FU);font-size:14px;font-weight:600;letter-spacing:1px;padding:12px 16px;outline:none;appearance:none;-webkit-appearance:none">
           <option value="" disabled selected>Choose a team...</option>
         </select>

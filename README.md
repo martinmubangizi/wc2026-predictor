@@ -11,23 +11,17 @@ A hybrid statistical model for estimating win probabilities across all stages of
 
 Each match is modelled as a pair of conditionally independent Poisson random variables:
 
-```
 X ~ Poisson(λ_A),  Y ~ Poisson(λ_B)
-```
 
 where λ_A and λ_B represent the expected goal counts for teams A and B respectively. The joint density is corrected using the Dixon-Coles adjustment (Dixon & Coles, 1997):
 
-```
 P(X=x, Y=y) = τ(x, y, λ_A, λ_B, ρ) · P_Pois(x; λ_A) · P_Pois(y; λ_B)
-```
 
 The correction factor τ adjusts the four low-score cells {(0,0), (1,0), (0,1), (1,1)}, which standard Poisson systematically underestimates. The parameter ρ is estimated via MLE on historical international match data; empirical fit yields ρ = -0.13.
 
 Expected goals are parameterised as:
 
-```
 λ_A = α_A · β_B · γ · φ_A
-```
 
 where α_A is team A's attack strength (xG-based, 24-month exponentially weighted), β_B is opponent B's defensive weakness, γ encodes host-nation advantage (fitted at +17% for USA/Canada/Mexico), and φ_A is a player-form multiplier derived from the squad's composite star and depth ratings.
 
@@ -52,9 +46,7 @@ Trained on N = 25,000 synthetic international match samples generated from Elo-b
 
 Predictions from both models are combined as a calibration-weighted linear blend:
 
-```
 P_ensemble(outcome) = w_DC · P_DC(outcome) + w_XGB · P_XGB(outcome)
-```
 
 Weights are derived from backtested RPS: w_DC = 0.503, w_XGB = 0.497. Both models are near-identically calibrated on international match data (RPS_DC = 0.220, RPS_XGB = 0.222 vs. naive baseline of 0.333).
 
@@ -95,21 +87,17 @@ Backtested using a rolling-window approach on three prior tournaments:
 
 Primary evaluation metric: Ranked Probability Score (RPS), defined as:
 
-```
 RPS = (1/2) · Σ_{k=1}^{K-1} (F_k - O_k)²
-```
 
 where F_k is the predicted CDF and O_k is the observed CDF over the ordered outcome space {Win, Draw, Loss}. Lower RPS indicates better calibration. A uniformly distributed predictor scores RPS = 0.333.
 
 
 ## Usage
 
-```bash
 pip install -r requirements.txt
 python predict.py --sims 15000
-```
 
-Outputs to `output/`: `predictions.json`, `predictions.csv`, `bracket.html`
+Outputs to output/: predictions.json, predictions.csv, bracket.html
 
 
 ## References
