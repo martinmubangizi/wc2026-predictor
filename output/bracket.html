@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>WC2026 ML Predictor — Martin Mubangizi</title>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@400;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --mg:#FF0055;--pac:#00E5FF;--lime:#CCFF00;
+  --obs:#0B0C10;--wh:#FFFFFF;--surf:#F4F5F7;--mut:#8E929B;--ink:#1A1C22;
+  --gap:3px;
+  --FD:'Anton',sans-serif;--FU:'Barlow Condensed',sans-serif;--FB:'Space Grotesk',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;overflow-x:hidden}
+body{background:var(--wh);color:var(--obs);font-family:var(--FB);cursor:none}
+#cur{position:fixed;width:10px;height:10px;background:var(--mg);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);mix-blend-mode:difference;transition:width .15s,height .15s}
+#curR{position:fixed;width:32px;height:32px;border:1.5px solid var(--mg);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);opacity:.5}
+[data-r]{opacity:0;transform:translateY(28px);transition:opacity .6s cubic-bezier(.22,1,.36,1),transform .6s cubic-bezier(.22,1,.36,1)}
+[data-r=l]{transform:translateX(-32px)}[data-r=r]{transform:translateX(32px)}
+[data-r].in{opacity:1;transform:none}
+
+/* NAV */
+.nav{position:fixed;top:0;left:0;right:0;z-index:500;height:50px;background:var(--obs);display:flex;align-items:center;padding:0 40px;border-bottom:3px solid var(--mg)}
+.nw{font-family:var(--FD);font-size:14px;letter-spacing:3px;color:var(--wh);margin-right:36px}
+.nw em{color:var(--mg);font-style:normal}
+.nl{display:flex;gap:0;list-style:none;flex:1}
+.nl a{font-family:var(--FU);font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.4);text-decoration:none;padding:0 16px;height:50px;display:flex;align-items:center;border-right:1px solid rgba(255,255,255,.06);transition:color .15s,background .15s}
+.nl a:hover{color:var(--wh);background:rgba(255,0,85,.1)}
+.npill{font-family:var(--FU);font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;background:var(--mg);color:var(--wh);padding:5px 14px;margin-left:auto;display:flex;align-items:center;gap:6px}
+.ndot{width:5px;height:5px;border-radius:50%;background:var(--lime);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+
+/* HERO */
+.hero{min-height:100vh;padding-top:50px;display:grid;grid-template-columns:1fr 1fr;position:relative;overflow:hidden;background:var(--wh)}
+.hslash{position:absolute;top:0;bottom:0;left:50%;width:100px;background:var(--mg);clip-path:polygon(40% 0,100% 0,60% 100%,0 100%);z-index:3;pointer-events:none}
+.hleft{padding:72px 48px 72px 44px;display:flex;flex-direction:column;justify-content:center;position:relative;z-index:2}
+.hright{background:var(--obs);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:72px 44px 72px 72px;position:relative;z-index:2;overflow:hidden}
+.hright::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 25% 50%,rgba(0,229,255,.07),transparent 60%),radial-gradient(ellipse at 75% 20%,rgba(204,255,0,.04),transparent 50%);pointer-events:none}
+.hright::after{content:'';position:absolute;inset:0;opacity:.35;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.05'/%3E%3C/svg%3E");pointer-events:none}
+.htag{font-family:var(--FU);font-size:10px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:var(--mg);display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.htag::before{content:'';width:24px;height:2px;background:var(--mg);display:block}
+.hh1{font-family:var(--FD);font-size:clamp(60px,8vw,108px);line-height:.86;text-transform:uppercase;letter-spacing:-2px;margin-bottom:24px;color:var(--obs)}
+.hh1 .r{color:var(--mg)}.hh1 .s{color:transparent;-webkit-text-stroke:2px var(--obs)}
+.hbody{font-size:14px;line-height:1.75;color:rgba(11,12,16,.58);max-width:420px;margin-bottom:32px;border-left:3px solid var(--lime);padding-left:14px}
+.ctas{display:flex;gap:10px;flex-wrap:wrap}
+.btn{font-family:var(--FU);font-size:12px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;padding:13px 26px;border:none;cursor:none;text-decoration:none;display:inline-flex;align-items:center;gap:7px;transition:transform .15s,box-shadow .15s}
+.btn:hover{transform:translateY(-2px)}
+.bm{background:var(--mg);color:var(--wh)}.bm:hover{box-shadow:0 8px 24px rgba(255,0,85,.35)}
+.bo{background:transparent;color:var(--obs);border:2px solid var(--obs)}.bo:hover{background:var(--obs);color:var(--wh)}
+.hstats{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--gap);margin-top:40px;padding-top:24px;border-top:1px solid rgba(11,12,16,.08)}
+.hsv{font-family:var(--FD);font-size:32px;color:var(--mg);line-height:1}
+.hsl{font-family:var(--FU);font-size:9px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--mut);margin-top:3px}
+
+/* TROPHY ZONE */
+.trophy-zone{position:relative;z-index:2;text-align:center;width:100%}
+.tz-tag{font-family:var(--FU);font-size:9px;font-weight:700;letter-spacing:5px;text-transform:uppercase;color:var(--pac);margin-bottom:14px;display:flex;align-items:center;justify-content:center;gap:8px}
+.tz-tag::before,.tz-tag::after{content:'';flex:1;height:1px;background:rgba(0,229,255,.2)}
+
+/* TROPHY DISPLAY */
+.trophy-wrap{position:relative;width:160px;height:200px;margin:0 auto 18px;display:flex;align-items:center;justify-content:center}
+#trophyImg{width:100%;height:100%;object-fit:contain;display:block;filter:drop-shadow(0 0 28px rgba(255,107,0,.55));position:relative;z-index:2}
+.trophy-glow{position:absolute;inset:-24px;background:radial-gradient(ellipse,rgba(255,0,85,.18),transparent 70%);pointer-events:none;animation:tglow 3s ease infinite;z-index:1}
+@keyframes tglow{0%,100%{opacity:1}50%{opacity:.35}}
+
+.winner-name{font-family:var(--FD);font-size:52px;letter-spacing:2px;text-transform:uppercase;color:var(--wh);line-height:1;margin-bottom:5px}
+.winner-pct{font-family:var(--FU);font-size:16px;font-weight:700;color:var(--lime);letter-spacing:2px;margin-bottom:18px}
+.wmini{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--gap);width:100%}
+.wm{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);padding:10px 6px;text-align:center}
+.wmv{font-family:var(--FD);font-size:20px;color:var(--pac);line-height:1}
+.wml{font-family:var(--FU);font-size:8px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.3);margin-top:2px}
+
+/* TICKER */
+.ticker{background:var(--mg);overflow:hidden;height:34px;display:flex;align-items:center;border-bottom:2px solid rgba(0,0,0,.15)}
+.tlbl{font-family:var(--FU);font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;background:var(--obs);color:var(--mg);padding:0 18px;height:34px;display:flex;align-items:center;white-space:nowrap;flex-shrink:0}
+.ttrack{display:flex;animation:tick 35s linear infinite}
+.titem{font-family:var(--FU);font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.9);padding:0 36px;white-space:nowrap}
+.titem::after{content:'·';margin-left:36px;opacity:.4}
+@keyframes tick{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
+/* DIVIDERS */
+.sdiv{background:var(--obs);height:52px;display:flex;align-items:stretch;padding:0 44px;overflow:hidden}
+.sdt{font-family:var(--FU);font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;background:var(--mg);color:var(--wh);padding:0 22px;display:flex;align-items:center;clip-path:polygon(0 0,calc(100% - 10px) 0,100% 50%,calc(100% - 10px) 100%,0 100%);padding-right:32px}
+.sdt.lime{background:var(--lime);color:var(--obs)}.sdt.pac{background:var(--pac);color:var(--obs)}
+.sdnum{font-family:var(--FD);font-size:12px;color:rgba(255,255,255,.15);padding:0 20px;display:flex;align-items:center;letter-spacing:2px}
+.sdline{flex:1;align-self:center;height:1px;background:rgba(255,255,255,.07)}
+.sdright{font-family:var(--FU);font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.2);padding:0 20px;display:flex;align-items:center}
+
+/* SECTIONS */
+.sec{padding:60px 44px;background:var(--wh)}
+.sec.dark{background:var(--obs)}.sec.surf{background:var(--surf)}
+.sec-h2{font-family:var(--FD);font-size:clamp(32px,4.5vw,58px);text-transform:uppercase;line-height:.88;letter-spacing:-1px;margin-bottom:6px;color:var(--obs)}
+.sec.dark .sec-h2{color:var(--wh)}
+.sec-sub{font-size:13px;color:var(--mut);margin-bottom:36px;line-height:1.6}
+.sec.dark .sec-sub{color:rgba(255,255,255,.35)}
+
+/* ALGORITHM */
+.algo-wrap{display:grid;grid-template-columns:1fr 2fr;gap:44px;align-items:start;position:relative;overflow:hidden}
+.algo-wrap::before{content:'MODEL';position:absolute;right:-20px;top:50%;transform:translateY(-50%);font-family:var(--FD);font-size:190px;color:rgba(255,255,255,.012);pointer-events:none;user-select:none;white-space:nowrap}
+.atag{font-family:var(--FU);font-size:10px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:var(--lime);display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.atag::before{content:'';width:22px;height:2px;background:var(--lime);display:block}
+.ah2{font-family:var(--FD);font-size:clamp(36px,5vw,58px);text-transform:uppercase;line-height:.9;color:var(--wh);margin-bottom:16px}
+.ah2 em{font-style:normal;color:var(--lime)}
+.adesc{font-size:13px;line-height:1.8;color:rgba(255,255,255,.4);margin-bottom:28px}
+.acounts{display:flex;gap:var(--gap)}
+.ac{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-top:2px solid var(--mg);padding:16px 18px;flex:1}
+.ac.lime{border-top-color:var(--lime)}.ac.pac{border-top-color:var(--pac)}
+.acv{font-family:var(--FD);font-size:26px;color:var(--wh);line-height:1}
+.acl{font-family:var(--FU);font-size:9px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.28);margin-top:4px}
+.asteps{display:flex;flex-direction:column;gap:var(--gap)}
+.astep{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05);border-left:3px solid var(--mg);padding:16px 20px;display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;transition:background .2s}
+.astep:nth-child(2){border-left-color:var(--pac)}.astep:nth-child(3){border-left-color:var(--lime)}.astep:nth-child(4){border-left-color:var(--mg)}
+.astep:hover{background:rgba(255,255,255,.055)}
+.asn{font-family:var(--FD);font-size:24px;color:rgba(255,255,255,.12);min-width:24px}
+.ast{font-family:var(--FU);font-size:15px;font-weight:700;color:var(--wh);margin-bottom:3px;letter-spacing:.5px}
+.asd{font-size:12px;color:rgba(255,255,255,.38);line-height:1.6}
+.ass{font-family:var(--FD);font-size:13px;text-align:right;white-space:nowrap}
+.ass span{display:block;font-family:var(--FU);font-size:8px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.18)}
+
+/* FAVOURITES */
+.fg{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--gap)}
+.fv{background:var(--surf);border:1px solid rgba(11,12,16,.06);border-top:3px solid var(--mut);cursor:none;position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s}
+.fv:hover{transform:translateY(-5px);box-shadow:0 18px 44px rgba(255,0,85,.13);border-top-color:var(--mg)}
+.fv.r1{border-top-color:var(--mg)}.fv.r2{border-top-color:var(--mut)}.fv.r3{border-top-color:#CD7F32}
+.ffz{height:72px;background:var(--obs);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;clip-path:polygon(0 0,100% 0,100% 78%,88% 100%,0 100%)}
+.ffe{font-size:50px;line-height:1;transition:transform .3s}
+.fv:hover .ffe{transform:scale(1.12)}
+.ffo{position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,0,85,.12),transparent 60%);pointer-events:none}
+.fbody{padding:12px 14px 10px}
+.frn{display:flex;align-items:baseline;gap:7px;margin-bottom:4px}
+.frank{font-family:var(--FD);font-size:20px;color:rgba(11,12,16,.08);line-height:1}
+.fv.r1 .frank{color:rgba(255,0,85,.2)}
+.fname{font-family:var(--FU);font-size:16px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--obs)}
+.fpct{font-family:var(--FD);font-size:32px;color:var(--mg);line-height:1;margin-bottom:3px}
+.fbar{height:2px;background:rgba(11,12,16,.07);margin:7px 0}
+.fbf{height:100%;background:var(--mg);width:0%;transition:width 1.4s cubic-bezier(.22,1,.36,1)}
+.fv.r2 .fbf{background:var(--mut)}.fv.r3 .fbf{background:#CD7F32}
+.fsub{font-size:10px;color:var(--mut);line-height:1.6}
+.fhint{position:absolute;bottom:7px;right:9px;font-family:var(--FU);font-size:8px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--mg);opacity:0;transition:opacity .2s}
+.fv:hover .fhint{opacity:1}
+
+/* GROUPS */
+.gg{display:grid;grid-template-columns:repeat(6,1fr);gap:var(--gap)}
+.gc{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);overflow:hidden;transition:transform .2s}
+.gc:hover{transform:translateY(-3px)}
+.gch{background:var(--ink);padding:9px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid var(--mg)}
+.gcl{font-family:var(--FD);font-size:22px;color:var(--wh);line-height:1}
+.gcv{font-family:var(--FU);font-size:8px;font-weight:500;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.35);text-align:right;line-height:1.4;max-width:60px}
+.gr{display:flex;align-items:center;gap:6px;padding:6px 10px;border-bottom:1px solid rgba(255,255,255,.04)}
+.gr:last-child{border-bottom:none}
+.gr.w{background:rgba(255,0,85,.08)}.gr.r{background:rgba(255,255,255,.025)}.gr.t3{background:rgba(0,229,255,.05)}
+.gfe{font-size:17px;line-height:1;flex-shrink:0}
+.gpos{font-family:var(--FD);font-size:10px;color:rgba(255,255,255,.2);min-width:9px}
+.gr.w .gpos{color:var(--mg)}.gr.t3 .gpos{color:var(--pac)}
+.gpip{width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,.1);flex-shrink:0}
+.gr.w .gpip{background:var(--mg);box-shadow:0 0 5px var(--mg)}
+.gr.r .gpip{background:rgba(255,255,255,.35)}
+.gr.t3 .gpip{background:var(--pac);box-shadow:0 0 5px var(--pac)}
+.gt{font-family:var(--FU);font-size:11px;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:rgba(255,255,255,.45)}
+.gr.w .gt{color:var(--wh);font-weight:800}.gr.r .gt{color:rgba(255,255,255,.75)}.gr.t3 .gt{color:rgba(255,255,255,.75)}
+.gp{font-family:var(--FU);font-size:9px;font-weight:700;color:rgba(255,255,255,.2)}
+.gr.w .gp{color:var(--mg)}.gr.t3 .gp{color:var(--pac)}
+
+/* THIRDS */
+.thirds{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--gap);margin-bottom:var(--gap)}
+.tc{background:rgba(0,229,255,.05);border:1px solid rgba(0,229,255,.18);border-left:3px solid var(--pac);padding:12px 14px;display:flex;align-items:center;gap:10px;transition:transform .2s,background .2s}
+.tc:hover{transform:translateX(4px);background:rgba(0,229,255,.09)}
+.tce{font-size:26px;line-height:1;flex-shrink:0}
+.tcn{font-family:var(--FU);font-size:14px;font-weight:700;color:var(--wh);letter-spacing:.5px}
+.tcg{font-family:var(--FU);font-size:8px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.3);margin-top:1px}
+.tcp{font-family:var(--FD);font-size:18px;color:var(--pac);margin-left:auto;flex-shrink:0}
+.elimstrip{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05);padding:10px 16px;display:flex;align-items:center;gap:12px}
+.elimlbl{font-family:var(--FU);font-size:9px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.2);flex-shrink:0}
+.elimteams{display:flex;gap:10px;flex-wrap:wrap}
+.eit{font-family:var(--FU);font-size:11px;font-weight:600;color:rgba(255,255,255,.25);display:flex;align-items:center;gap:5px}
+
+/* ═══════════════════════════════════════════
+   BRACKET — CORRECT FIFA LOGIC
+   Top half: Groups A-I pathway
+   Bottom half: Groups J-L + H/G/K pathway
+   Spain (Group H) and Argentina (Group J) 
+   are on OPPOSITE sides — can only meet in Final
+   France (Group I) on top half
+   England (Group L) on top half
+   ═══════════════════════════════════════════ */
+.bracket-section{padding:60px 0 60px 44px}
+.bracket-head{margin-bottom:32px;padding-right:44px}
+
+/* Two-half layout */
+.bracket-halves{display:grid;grid-template-columns:1fr 1fr;gap:var(--gap)}
+.half{background:rgba(11,12,16,.02);border:1px solid rgba(11,12,16,.06);padding:20px 16px}
+.half-label{font-family:var(--FU);font-size:9px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--mg);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.half-label::after{content:'';flex:1;height:1px;background:rgba(255,0,85,.15)}
+.sec .half-label{color:var(--mg)}
+
+/* Round columns inside each half */
+.rounds{display:grid;grid-template-columns:1.2fr 1fr 1fr auto;gap:var(--gap);align-items:center}
+.rcol{display:flex;flex-direction:column;gap:var(--gap);height:100%;justify-content:space-around}
+.rlbl{font-family:var(--FU);font-size:8px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:rgba(11,12,16,.25);text-align:center;padding-bottom:8px}
+.bm2{background:var(--wh);border:1px solid rgba(11,12,16,.08);border-left:2px solid rgba(11,12,16,.08);overflow:hidden;transition:border-left-color .2s}
+.bm2:hover{border-left-color:var(--mg)}
+.bt2{padding:5px 8px;display:flex;align-items:center;gap:6px;border-bottom:1px solid rgba(11,12,16,.05)}
+.bt2:last-child{border-bottom:none}
+.bte2{font-size:13px;line-height:1;flex-shrink:0}
+.btn3{font-family:var(--FU);font-size:10px;font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:rgba(11,12,16,.35)}
+.bt2.p .btn3{color:var(--obs);font-weight:800}
+.btp2{font-family:var(--FU);font-size:8px;font-weight:700;color:rgba(255,0,85,.4);white-space:nowrap}
+.bt2.p .btp2{color:var(--mg)}
+
+/* SF box */
+.sf-box{background:rgba(255,0,85,.06);border:1px solid rgba(255,0,85,.2);border-left:3px solid var(--mg);padding:8px 10px}
+.sf-team{display:flex;align-items:center;gap:6px;padding:3px 0}
+.sf-e{font-size:14px;line-height:1}
+.sf-n{font-family:var(--FU);font-size:12px;font-weight:700;color:var(--obs)}
+.sf-p{font-family:var(--FU);font-size:9px;color:var(--mg);font-weight:700;margin-left:auto}
+
+/* FINAL box — centre */
+.final-centre{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px 0;gap:12px}
+.final-arrow{font-family:var(--FU);font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--mg);text-align:center}
+
+.fbox{background:var(--mg);position:relative;overflow:hidden;width:100%;max-width:220px;box-shadow:0 0 44px rgba(255,0,85,.3)}
+.fbox::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.12),transparent 50%)}
+.fbox-noise{position:absolute;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.05'/%3E%3C/svg%3E");pointer-events:none}
+.fbox-inner{position:relative;z-index:1;padding:16px 12px;text-align:center}
+.fbox-trophy{font-size:30px;display:block;margin-bottom:4px}
+.fbox-lbl{font-family:var(--FU);font-size:7px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.7);display:block;margin-bottom:3px}
+.fbox-flag{font-size:24px;display:block;margin:4px 0}
+.fbox-w{font-family:var(--FD);font-size:20px;color:var(--wh);letter-spacing:1px;text-transform:uppercase;line-height:1}
+.fbox-p{font-family:var(--FU);font-size:11px;font-weight:700;color:var(--lime);margin-top:3px}
+.fbox-v{font-size:8px;color:rgba(255,255,255,.5);margin-top:2px}
+.sf-label-badge{font-family:var(--FU);font-size:8px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(11,12,16,.35);text-align:center;margin-top:4px}
+
+/* MODAL */
+.mbg{position:fixed;inset:0;z-index:800;background:rgba(11,12,16,.9);display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(8px)}
+.mbg.open{display:flex}
+.modal{background:var(--wh);max-width:560px;width:100%;max-height:88vh;overflow-y:auto;position:relative;border-top:4px solid var(--mg);animation:min .28s cubic-bezier(.22,1,.36,1)}
+@keyframes min{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+.mx{position:sticky;top:0;background:var(--obs);padding:9px 14px;display:flex;align-items:center;justify-content:space-between;z-index:1}
+.mxt{font-family:var(--FU);font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.35)}
+.mxb{background:rgba(255,255,255,.07);border:none;color:var(--wh);font-size:15px;width:27px;height:27px;cursor:none;display:flex;align-items:center;justify-content:center;transition:background .15s}
+.mxb:hover{background:var(--mg)}
+.mhero{display:flex;align-items:center;gap:0;border-bottom:1px solid rgba(11,12,16,.07)}
+.mflag{width:100px;height:68px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--obs);font-size:54px}
+.mhi{padding:16px 20px;flex:1}
+.mc{font-family:var(--FD);font-size:34px;text-transform:uppercase;line-height:1;color:var(--obs)}
+.mr{font-family:var(--FU);font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--mg);margin-top:3px}
+.mbody{padding:18px 20px}
+.ms4{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--gap);margin-bottom:18px}
+.ms{background:var(--surf);padding:10px 8px;text-align:center;border-top:2px solid rgba(11,12,16,.06)}
+.msv{font-family:var(--FD);font-size:22px;color:var(--mg)}.msl{font-family:var(--FU);font-size:8px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--mut);margin-top:2px}
+.msec{font-family:var(--FU);font-size:9px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--mg);display:flex;align-items:center;gap:8px;margin:14px 0 8px}
+.msec::after{content:'';flex:1;height:1px;background:rgba(255,0,85,.15)}
+.mp{display:flex;align-items:center;gap:10px;padding:8px 10px;border-left:2px solid transparent;transition:border-color .15s,background .15s}
+.mp:hover{border-left-color:var(--mg);background:rgba(255,0,85,.03)}
+.mpn{font-family:var(--FU);font-size:13px;font-weight:700;color:var(--obs)}
+.mpc{font-size:11px;color:var(--mut);margin-top:1px}
+.mps{font-family:var(--FD);font-size:20px;color:var(--mg);margin-left:auto}
+.mnote{font-size:12px;line-height:1.75;color:rgba(11,12,16,.52);border-left:3px solid var(--lime);padding:10px 14px;background:rgba(204,255,0,.04);margin-top:10px}
+
+/* FOOTER */
+.footer{background:var(--obs);border-top:4px solid var(--mg);padding:52px 44px 36px}
+.fg2{display:grid;grid-template-columns:2fr 1fr 1fr;gap:44px;margin-bottom:36px}
+.fbrand{font-family:var(--FD);font-size:28px;text-transform:uppercase;letter-spacing:1px;color:var(--wh);line-height:1;margin-bottom:5px}
+.fbrand em{font-style:normal;color:var(--mg)}
+.ftitle{font-family:var(--FU);font-size:13px;font-weight:500;color:rgba(255,255,255,.45);margin-bottom:3px;letter-spacing:.3px}
+.frole{display:inline-flex;align-items:center;gap:6px;background:rgba(255,0,85,.1);border:1px solid rgba(255,0,85,.2);padding:4px 10px;margin-top:8px;font-family:var(--FU);font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--mg)}
+.fch{font-family:var(--FU);font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.25);margin-bottom:14px}
+.flinks{display:flex;flex-direction:column;gap:8px}
+.flinks a{font-size:13px;color:rgba(255,255,255,.4);text-decoration:none;transition:color .15s;display:flex;align-items:center;gap:7px}
+.flinks a:hover{color:var(--wh)}.flinks a::before{content:'→';color:var(--mg);font-size:11px}
+.fbot{display:flex;align-items:center;justify-content:space-between;border-top:1px solid rgba(255,255,255,.06);padding-top:22px;gap:20px}
+.fdis{font-size:11px;color:rgba(255,255,255,.18);line-height:1.6;max-width:460px}
+.fgit{font-family:var(--FU);font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.22);text-decoration:none;transition:color .2s;white-space:nowrap}
+.fgit:hover{color:var(--lime)}
+
+@media(max-width:960px){
+  .hero{grid-template-columns:1fr}.hright,.hslash{display:none}
+  .hleft{padding:88px 28px 56px}
+  .sec{padding:48px 24px}.bracket-section{padding:48px 24px}
+  .fg{grid-template-columns:repeat(2,1fr)}
+  .gg{grid-template-columns:repeat(3,1fr)}
+  .thirds{grid-template-columns:repeat(2,1fr)}
+  .fg2{grid-template-columns:1fr}.footer{padding:36px 24px}
+  .nl{display:none}.algo-wrap{grid-template-columns:1fr}
+  .ms4{grid-template-columns:repeat(2,1fr)}
+  .bracket-halves{grid-template-columns:1fr}
+  .rounds{grid-template-columns:1fr 1fr auto}
+}
+</style>
+</head>
+<body>
+
+<div id="cur"></div><div id="curR"></div>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nw">WC<em>2026</em> · ML</div>
+  <ul class="nl">
+    <li><a href="#model">Model</a></li>
+    <li><a href="#favourites">Favourites</a></li>
+    <li><a href="#groups">Groups</a></li>
+    <li><a href="#thirds">Round of 32</a></li>
+    <li><a href="#bracket">Bracket</a></li>
+    <li><a href="https://github.com/martinmubangizi/wc2026-predictor" target="_blank" rel="noopener">GitHub ↗</a></li>
+  </ul>
+  <div class="npill"><span class="ndot"></span>Spain 16.9%</div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hslash"></div>
+  <div class="hleft">
+    <div class="htag" data-r="l">Predictive Analytics · 15,000 Monte Carlo Simulations</div>
+    <h1 class="hh1" data-r="l">FIFA<br><span class="r">World</span><br>Cup <span class="s">2026</span></h1>
+    <p class="hbody" data-r="l">Dixon-Coles Poisson regression + XGBoost gradient boosting, weighted by confirmed June 2026 squad ratings. 48 teams. 12 groups. One predicted champion.</p>
+    <div class="ctas" data-r="l">
+      <a href="#favourites" class="btn bm">View Predictions ↓</a>
+      <a href="https://github.com/martinmubangizi/wc2026-predictor" target="_blank" rel="noopener" class="btn bo">GitHub ↗</a>
+    </div>
+    <div class="hstats" data-r>
+      <div><div class="hsv">15K</div><div class="hsl">Simulations</div></div>
+      <div><div class="hsv" style="color:var(--obs)">48</div><div class="hsl">Teams</div></div>
+      <div><div class="hsv" style="color:var(--obs)">21</div><div class="hsl">Features</div></div>
+      <div><div class="hsv" style="color:var(--obs)">2</div><div class="hsl">Models</div></div>
+    </div>
+  </div>
+
+  <div class="hright">
+    <div class="trophy-zone" data-r="r">
+      <div class="tz-tag">Predicted Champion</div>
+
+      <!-- TROPHY: image loads from trophy.jpeg in same folder -->
+      <div class="trophy-wrap">
+        <img id="trophyImg" src="trophy.jpeg" alt="FIFA World Cup Trophy"
+             onerror="this.style.display='none';document.getElementById('trophyFallback').style.display='flex'">
+        <div id="trophyFallback" style="display:none;flex-direction:column;align-items:center;justify-content:center;width:160px;height:200px;border:2px dashed rgba(255,107,0,.3);gap:8px">
+          <span style="font-size:52px">🏆</span>
+          <span style="font-family:var(--FU);font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,107,0,.5)">Add trophy.jpeg</span>
+        </div>
+        <div class="trophy-glow"></div>
+      </div>
+
+      <div class="winner-name">Spain 🇪🇸</div>
+      <div class="winner-pct">16.9% WIN PROBABILITY</div>
+      <div class="wmini">
+        <div class="wm"><div class="wmv">27.4%</div><div class="wml">Final</div></div>
+        <div class="wm"><div class="wmv">40.7%</div><div class="wml">Semi</div></div>
+        <div class="wm"><div class="wmv">58.4%</div><div class="wml">QF</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TICKER -->
+<div class="ticker">
+  <div class="tlbl">Live Predictions</div>
+  <div style="overflow:hidden;flex:1"><div class="ttrack" id="ttrack"></div></div>
+</div>
+
+<!-- MODEL -->
+<div class="sdiv" id="model">
+  <div class="sdt">01</div><div class="sdnum">THE ALGORITHM</div>
+  <div class="sdline"></div><div class="sdright">Model Architecture</div>
+</div>
+<section class="sec dark" style="position:relative;overflow:hidden">
+  <div class="algo-wrap">
+    <div data-r="l">
+      <div class="atag">Statistical Engine</div>
+      <h2 class="ah2">Machine<br>Learning<br><em>System</em></h2>
+      <p class="adesc">Two models, one ensemble. Dixon-Coles corrected Poisson handles scoreline distributions. XGBoost captures non-linear interactions — altitude, rest days, squad depth under pressure.</p>
+      <div class="acounts">
+        <div class="ac"><div class="acv">0.220</div><div class="acl">DC RPS score</div></div>
+        <div class="ac lime"><div class="acv">0.222</div><div class="acl">XGB RPS score</div></div>
+        <div class="ac pac"><div class="acv">0.333</div><div class="acl">Naïve baseline</div></div>
+      </div>
+    </div>
+    <div class="asteps" data-r="r">
+      <div class="astep"><div class="asn">01</div><div><div class="ast">Dixon-Coles Poisson Regression</div><div class="asd">Bivariate Poisson with ρ = −0.13 correction. Generates 9×9 scoreline probability matrix per match. Vectorised NumPy — 50× faster than scipy.</div></div><div class="ass" style="color:var(--mg)">RPS 0.220<span>Model 1</span></div></div>
+      <div class="astep"><div class="asn">02</div><div><div class="ast">XGBoost Classifier</div><div class="asd">500 estimators trained on 25,000 matches. 21 features — Elo differential, xG ratios, form EWMA, host advantage, altitude penalty, cross-interaction terms.</div></div><div class="ass" style="color:var(--pac)">RPS 0.222<span>Model 2</span></div></div>
+      <div class="astep"><div class="asn">03</div><div><div class="ast">Player Form Multiplier</div><div class="asd">Each team's λ scaled by star_rating × depth_rating from confirmed June 2026 squads. Mbappé 9.6 shifts France's expected goals by +1.08×.</div></div><div class="ass" style="color:var(--lime)">×1.12 max<span>Form layer</span></div></div>
+      <div class="astep"><div class="asn">04</div><div><div class="ast">Monte Carlo Simulation</div><div class="asd">15,000 complete tournaments — 72 group games, R32, QFs, SFs, Final. FIFA tiebreakers, extra time, nation-weighted penalty shootouts. 4ms per run via caching.</div></div><div class="ass" style="color:var(--mg)">15,000×<span>Simulations</span></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- FAVOURITES -->
+<div class="sdiv" id="favourites">
+  <div class="sdt lime">02</div><div class="sdnum">TOURNAMENT FAVOURITES</div>
+  <div class="sdline"></div><div class="sdright">Click any card for full breakdown</div>
+</div>
+<section class="sec surf">
+  <h2 class="sec-h2" data-r>Win Probability</h2>
+  <p class="sec-sub" data-r>Ranked by probability of lifting the trophy · July 19 · MetLife Stadium · New Jersey</p>
+  <div class="fg" id="favGrid"></div>
+</section>
+
+<!-- GROUPS -->
+<div class="sdiv" id="groups">
+  <div class="sdt pac">03</div><div class="sdnum">GROUP STAGE · 12 GROUPS</div>
+  <div class="sdline"></div><div class="sdright">🔴 Winner · ⚪ Runner-up · 🔵 Best 3rd</div>
+</div>
+<section class="sec dark">
+  <h2 class="sec-h2" data-r>48 Teams · 12 Groups</h2>
+  <p class="sec-sub" data-r>Top 2 from each group advance automatically (24 teams). Best 8 third-placed teams also advance — completing the 32-team bracket.</p>
+  <div class="gg" id="groupsGrid"></div>
+</section>
+
+<!-- THIRDS -->
+<div class="sdiv" id="thirds">
+  <div class="sdt">04</div><div class="sdnum">BEST 8 THIRD-PLACED TEAMS</div>
+  <div class="sdline"></div><div class="sdright">FIFA Rule · Advance to Round of 32</div>
+</div>
+<section class="sec dark" style="padding-top:36px">
+  <h2 class="sec-h2" data-r style="color:var(--wh)">Round of 32 <span style="color:var(--pac)">Wild Cards</span></h2>
+  <p class="sec-sub" data-r>The 8 best third-placed teams ranked by points → goal difference → goals scored. 4 teams go home.</p>
+  <div class="thirds" id="thirdsGrid"></div>
+  <div data-r><div class="elimstrip"><span class="elimlbl">Eliminated 3rd-place teams</span><div class="elimteams" id="elimTeams"></div></div></div>
+</section>
+
+<!-- BRACKET -->
+<div class="sdiv" id="bracket">
+  <div class="sdt lime">05</div><div class="sdnum">KNOCKOUT BRACKET</div>
+  <div class="sdline"></div><div class="sdright">Official FIFA 2026 draw structure</div>
+</div>
+<section class="sec surf" style="padding:60px 32px">
+  <h2 class="sec-h2" data-r style="margin-bottom:4px">The Road to the Final</h2>
+  <p class="sec-sub" data-r>Most probable teams at each knockout stage across 15,000 simulations.</p>
+
+  <div style="overflow-x:auto;padding-bottom:8px">
+  <div style="min-width:1100px;position:relative">
+
+    <!-- ROUND LABELS -->
+    <div style="display:grid;grid-template-columns:160px 22px 132px 22px 110px 22px 88px 116px 88px 22px 110px 22px 132px 22px 160px;margin-bottom:8px">
+      <div class="rl2">R32</div><div></div><div class="rl2">R16</div><div></div>
+      <div class="rl2">QF</div><div></div><div class="rl2">SF</div>
+      <div class="rl2" style="color:var(--mg)">🏆 FINAL</div>
+      <div class="rl2">SF</div><div></div><div class="rl2">QF</div>
+      <div></div><div class="rl2">R16</div><div></div><div class="rl2">R32</div>
+    </div>
+
+    <!-- BRACKET TREE -->
+    <div style="display:grid;grid-template-columns:160px 22px 132px 22px 110px 22px 88px 116px 88px 22px 110px 22px 132px 22px 160px;align-items:stretch;min-height:560px">
+
+      <!-- LEFT R32 -->
+      <div class="bcol">
+        <div class="bmt"><div class="bt3 p"><span class="bfe">🇧🇷</span><span class="btn4">Brazil</span><span class="bpct">61%</span></div><div class="bt3"><span class="bfe">🇯🇵</span><span class="btn4">Japan</span></div></div>
+        <div class="bmt"><div class="bt3 p"><span class="bfe">🇩🇪</span><span class="btn4">Germany</span><span class="bpct">65%</span></div><div class="bt3"><span class="bfe">🇨🇿</span><span class="btn4">Czechia</span></div></div>
+        <div class="bmt"><div class="bt3 p"><span class="bfe">🇰🇷</span><span class="btn4">South Korea</span></div><div class="bt3 p"><span class="bfe">🇨🇦</span><span class="btn4">Canada</span></div></div>
+        <div class="bmt"><div class="bt3 p"><span class="bfe">🇳🇱</span><span class="btn4">Netherlands</span><span class="bpct">46%</span></div><div class="bt3"><span class="bfe">🇲🇦</span><span class="btn4">Morocco</span></div></div>
+        <div class="bmt"><div class="bt3 p"><span class="bfe">🏴󠁧󠁢󠁥󠁮󠁧󠁿</span><span class="btn4">England</span><span class="bpct">64%</span></div><div class="bt3"><span class="bfe">🇩🇿</span><span class="btn4">Algeria</span></div></div>
+        <div class="bmt"><div class="bt3 p"><span class="bfe">🇫🇷</span><span class="btn4">France</span><span class="bpct">61%</span></div><div class="bt3"><span class="bfe">🇨🇮</span><span class="btn4">Ivory Coast</span></div></div>
+        <div class="bmt"><div class="bt3 p"><span class="bfe">🇲🇽</span><span class="btn4">Mexico</span><span class="bpct">41%</span></div><div class="bt3"><span class="bfe">🇸🇳</span><span class="btn4">Senegal</span></div></div>
+        <div class="bmt"><div class="bt3 p"><span class="bfe">🇳🇴</span><span class="btn4">Norway</span><span class="bpct">38%</span></div><div class="bt3"><span class="bfe">🇪🇨</span><span class="btn4">Ecuador</span></div></div>
+      </div>
+      <div class="bsvg" id="svgL1"></div>
+
+      <!-- LEFT R16 -->
+      <div class="bcol">
+        <div class="bmt"><div class="bt3 p"><span class="bfe">🇧🇷</span><span class="btn4">Brazil</span><span class="bpct">68%</span></div><div class="bt3"><span class="bfe">🇩🇪</span><span class="btn4">Germany</span><span class="bpct">55%</span></div></div>
+        <div class="bmt"><div class="bt3 p"><span class="bfe">🇳🇱</span><span class="btn4">Netherlands</span><span class="bpct">57%</span></div><div class="bt3"><span class="bfe">🇰🇷</span><span class="btn4">South Korea</span></div></div>
+        <div class="bmt"><div class="bt3 p"><span class="bfe">🏴󠁧󠁢󠁥󠁮󠁧󠁿</span><span class="btn4">England</span><span class="bpct">57%</span></div><div class="bt3 p"><span class="bfe">🇫🇷</span><span class="btn4">France</span><span class="bpct">76%</span></div></div>
+        <div class="bmt"><div class="bt3 p"><span class="bfe">🇲🇽</span><span class="btn4">Mexico</span></div><div class="bt3 p"><span class="bfe">🇳🇴</span><span class="btn4">Norway</span></div></div>
+      </div>
+      <div class="bsvg" id="svgL2"></div>
+
+      <!-- LEFT QF -->
+      <div class="bcol">
+        <div class="bmt"><div class="bt3 p"><span class="bfe">🇧🇷</span><span class="btn4">Brazil</span><span class="bpct">51%</span></div><div class="bt3"><span class="bfe">🇩🇪</span><span class="btn4">Germany</span><span class="bpct">42%</span></div></div>
+        <div class="bmt"><div class="bt3 p"><span class="bfe">🇫🇷</span><span class="btn4">France</span><span class="bpct">49%</span></div><div class="bt3"><span class="bfe">🏴󠁧󠁢󠁥󠁮󠁧󠁿</span><span class="btn4">England</span><span class="bpct">44%</span></div></div>
+      </div>
+      <div class="bsvg" id="svgL3"></div>
+
+      <!-- LEFT SF -->
+      <div class="bcol">
+        <div class="bmt bmt-sf"><div class="bt3 p"><span class="bfe">🇫🇷</span><span class="btn4">France</span><span class="bpct">32%</span></div></div>
+      </div>
+
+      <!-- FINAL -->
+      <div style="display:flex;align-items:center;justify-content:center;padding:0 2px">
+        <div class="finalbox">
+          <div class="fb-shine"></div>
+          <div class="fb-in">
+            <span class="fb-trophy">🏆</span>
+            <span class="fb-lbl">Champion</span>
+            <span class="fb-flag">🇪🇸</span>
+            <div class="fb-name">Spain</div>
+            <div class="fb-pct">16.9%</div>
+            <div class="fb-vs">Spain 🇪🇸 vs France 🇫🇷</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT SF -->
+      <div class="bcol">
+        <div class="bmt bmt-sf"><div class="bt3 p"><span class="bfe">🇪🇸</span><span class="btn4">Spain</span><span class="bpct">41%</span></div></div>
+      </div>
+      <div class="bsvg" id="svgR3"></div>
+
+      <!-- RIGHT QF -->
+      <div class="bcol">
+        <div class="bmt"><div class="bt3 p"><span class="bfe">🇪🇸</span><span class="btn4">Spain</span><span class="bpct">58%</span></div><div class="bt3"><span class="bfe">🇧🇪</span><span class="btn4">Belgium</span><span class="bpct">29%</span></div></div>
+        <div class="bmt"><div class="bt3 p"><span class="bfe">🇦🇷</span><span class="btn4">Argentina</span><span class="bpct">50%</span></div><div class="bt3"><span class="bfe">🇵🇹</span><span class="btn4">Portugal</span><span class="bpct">34%</span></div></div>
+      </div>
+      <div class="bsvg" id="svgR2"></div>
+
+      <!-- RIGHT R16 -->
+      <div class="bcol">
+        <div class="bmt"><div class="bt3 p"><span class="bfe">🇪🇸</span><span class="btn4">Spain</span><span class="bpct">78%</span></div><div class="bt3"><span class="bfe">🇧🇪</span><span class="btn4">Belgium</span><span class="bpct">62%</span></div></div>
+        <div class="bmt"><div class="bt3 p"><span class="bfe">🇦🇷</span><span class="btn4">Argentina</span><span class="bpct">77%</span></div><div class="bt3 p"><span class="bfe">🇵🇹</span><span class="btn4">Portugal</span><span class="bpct">60%</span></div></div>
+        <div class="bmt"><div class="bt3 p"><span class="bfe">🇨🇭</span><span class="btn4">Switzerland</span></div><div class="bt3 p"><span class="bfe">🇲🇦</span><span class="btn4">Morocco</span></div></div>
+        <div class="bmt"><div class="bt3 p"><span class="bfe">🇨🇴</span><span class="btn4">Colombia</span></div><div class="bt3 p"><span class="bfe">🇹🇷</span><span class="btn4">Türkiye</span></div></div>
+      </div>
+      <div class="bsvg" id="svgR1"></div>
+
+      <!-- RIGHT R32 -->
+      <div class="bcol">
+        <div class="bmt"><div class="bt3 p"><span class="bfe">🇪🇸</span><span class="btn4">Spain</span><span class="bpct">70%</span></div><div class="bt3"><span class="bfe">🇦🇹</span><span class="btn4">Austria</span></div></div>
+        <div class="bmt"><div class="bt3 p"><span class="bfe">🇧🇪</span><span class="btn4">Belgium</span><span class="bpct">63%</span></div><div class="bt3"><span class="bfe">🇮🇷</span><span class="btn4">Iran</span></div></div>
+        <div class="bmt"><div class="bt3 p"><span class="bfe">🇦🇷</span><span class="btn4">Argentina</span><span class="bpct">74%</span></div><div class="bt3"><span class="bfe">🇺🇾</span><span class="btn4">Uruguay</span></div></div>
+        <div class="bmt"><div class="bt3 p"><span class="bfe">🇵🇹</span><span class="btn4">Portugal</span><span class="bpct">57%</span></div><div class="bt3"><span class="bfe">🇦🇺</span><span class="btn4">Australia</span></div></div>
+        <div class="bmt"><div class="bt3 p"><span class="bfe">🇨🇭</span><span class="btn4">Switzerland</span><span class="bpct">54%</span></div><div class="bt3"><span class="bfe">🇸🇪</span><span class="btn4">Sweden</span></div></div>
+        <div class="bmt"><div class="bt3 p"><span class="bfe">🇨🇴</span><span class="btn4">Colombia</span><span class="bpct">41%</span></div><div class="bt3"><span class="bfe">🇭🇷</span><span class="btn4">Croatia</span></div></div>
+        <div class="bmt"><div class="bt3 p"><span class="bfe">🇹🇷</span><span class="btn4">Türkiye</span><span class="bpct">38%</span></div><div class="bt3"><span class="bfe">🇧🇦</span><span class="btn4">Bosnia &amp; Herz.</span></div></div>
+        <div class="bmt"><div class="bt3 p"><span class="bfe">🇺🇸</span><span class="btn4">USA</span></div><div class="bt3"><span class="bfe">🇪🇬</span><span class="btn4">Egypt</span></div></div>
+      </div>
+
+    </div><!-- end grid -->
+  </div></div>
+</section>
+
+<style>
+.rl2{font-family:var(--FU);font-size:8px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:rgba(11,12,16,.22);text-align:center}
+.bcol{display:flex;flex-direction:column;justify-content:space-around;gap:0;min-height:560px}
+.bsvg{position:relative;min-height:560px}
+.bsvg svg{position:absolute;top:0;left:0;width:100%;height:100%}
+.bmt{background:var(--wh);border:1px solid rgba(11,12,16,.1);border-left:2px solid rgba(11,12,16,.08);overflow:hidden;transition:border-left-color .2s,box-shadow .2s;margin:3px 0}
+.bmt:hover{border-left-color:var(--mg);box-shadow:2px 0 0 var(--mg)}
+.bmt-sf{border-left-color:var(--mg)!important;background:rgba(255,0,85,.04)}
+.bt3{padding:5px 7px;display:flex;align-items:center;gap:5px;border-bottom:1px solid rgba(11,12,16,.05)}
+.bt3:last-child{border-bottom:none}
+.bfe{font-size:14px;line-height:1;flex-shrink:0}
+.btn4{font-family:var(--FU);font-size:10px;font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:rgba(11,12,16,.35)}
+.bt3.p .btn4{color:var(--obs);font-weight:800}
+.bpct{font-family:var(--FU);font-size:9px;font-weight:700;color:rgba(255,0,85,.4);white-space:nowrap}
+.bt3.p .bpct{color:var(--mg)}
+.finalbox{background:var(--mg);width:108px;flex-shrink:0;position:relative;overflow:hidden;box-shadow:0 0 48px rgba(255,0,85,.4)}
+.fb-shine{position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.15),transparent 55%);pointer-events:none}
+.fb-in{position:relative;z-index:1;padding:14px 8px 12px;text-align:center}
+.fb-trophy{font-size:28px;display:block;margin-bottom:3px}
+.fb-lbl{font-family:var(--FU);font-size:7px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.7);display:block;margin-bottom:3px}
+.fb-flag{font-size:20px;display:block;margin:3px 0}
+.fb-name{font-family:var(--FD);font-size:18px;color:var(--wh);letter-spacing:1px;text-transform:uppercase;line-height:1}
+.fb-pct{font-family:var(--FU);font-size:11px;font-weight:700;color:var(--lime);margin-top:3px}
+.fb-vs{font-size:7px;color:rgba(255,255,255,.5);margin-top:3px;line-height:1.4}
+</style>
+
+<script>
+function drawBracketLines(){
+  function lines(id, fromN, toN, dir){
+    const el = document.getElementById(id);
+    if(!el) return;
+    const h = el.offsetHeight || 560;
+    const w = el.offsetWidth || 22;
+    let svg = el.querySelector('svg');
+    if(!svg){ svg = document.createElementNS('http://www.w3.org/2000/svg','svg'); el.appendChild(svg); }
+    svg.setAttribute('viewBox',`0 0 ${w} ${h}`);
+    svg.setAttribute('width','100%');
+    svg.setAttribute('height','100%');
+    svg.innerHTML='';
+    const stroke='rgba(11,12,16,0.13)';
+    const fromSp = h / fromN;
+    const toSp   = h / toN;
+    for(let i=0;i<fromN;i++){
+      const y1 = fromSp*i + fromSp/2;
+      const toIdx = Math.floor(i/(fromN/toN));
+      const y2 = toSp*toIdx + toSp/2;
+      const x1 = dir==='left' ? 0 : w;
+      const x2 = dir==='left' ? w : 0;
+      const p  = document.createElementNS('http://www.w3.org/2000/svg','path');
+      p.setAttribute('d',`M${x1},${y1} C${w/2},${y1} ${w/2},${y2} ${x2},${y2}`);
+      p.setAttribute('fill','none');
+      p.setAttribute('stroke',stroke);
+      p.setAttribute('stroke-width','1.5');
+      svg.appendChild(p);
+    }
+  }
+  lines('svgL1',8,4,'left');
+  lines('svgL2',4,2,'left');
+  lines('svgL3',2,1,'left');
+  lines('svgR3',1,2,'right');
+  lines('svgR2',2,4,'right');
+  lines('svgR1',4,8,'right');
+}
+setTimeout(drawBracketLines,300);
+window.addEventListener('resize',drawBracketLines);
+</script>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="fg2">
+    <div data-r="l">
+      <div class="fbrand">Martin <em>Mubangizi</em></div>
+      <div class="ftitle">Lead Data Scientist — 2026 FIFA World Cup ML Predictor</div>
+      <div class="ftitle">Fraud Risk Analyst · Wave Mobile Money</div>
+      <div class="frole">📍 Kampala, Uganda</div>
+      <div style="margin-top:10px;font-size:12px;color:rgba(255,255,255,.28);line-height:1.6">
+        MSc Big Data Analytics, Victoria University · MBA Candidate, UEL<br>
+        Certifications: VISA Risk Management · KNIME Data Science · Corporate Finance
+      </div>
+    </div>
+    <div data-r>
+      <div class="fch">Project Links</div>
+      <div class="flinks">
+        <a href="https://github.com/martinmubangizi/wc2026-predictor" target="_blank" rel="noopener">GitHub Repository</a>
+        <a href="#model">Model Architecture</a>
+        <a href="#favourites">Win Probabilities</a>
+        <a href="#bracket">Full Bracket</a>
+        <a href="#groups">Group Stage</a>
+        <a href="#thirds">Best 8 Thirds</a>
+      </div>
+    </div>
+    <div data-r>
+      <div class="fch">Tech Stack</div>
+      <div class="flinks">
+        <a href="https://github.com/martinmubangizi/wc2026-predictor" target="_blank" rel="noopener">Python · NumPy · SciPy</a>
+        <a href="https://github.com/martinmubangizi/wc2026-predictor" target="_blank" rel="noopener">XGBoost · LightGBM</a>
+        <a href="https://github.com/martinmubangizi/wc2026-predictor" target="_blank" rel="noopener">Dixon-Coles (1997)</a>
+        <a href="https://github.com/martinmubangizi/wc2026-predictor" target="_blank" rel="noopener">Monte Carlo Simulation</a>
+      </div>
+    </div>
+  </div>
+  <div class="fbot">
+    <div class="fdis">⚠ Probabilistic model only. 16.9% means Spain wins in ~1 in 6 simulated tournaments. Football is beautifully unpredictable. All models are wrong; some are useful. — George Box</div>
+    <a href="https://github.com/martinmubangizi/wc2026-predictor" target="_blank" rel="noopener" class="fgit">github.com/martinmubangizi/wc2026-predictor ↗</a>
+  </div>
+</footer>
+
+<!-- MODAL -->
+<div class="mbg" id="mbg" onclick="closeMBg(event)">
+  <div class="modal" id="modal">
+    <div class="mx"><span class="mxt">Team Profile</span><button class="mxb" onclick="closeM()">✕</button></div>
+    <div id="mContent"></div>
+  </div>
+</div>
+
+<script>
+// CURSOR
+const C=document.getElementById('cur'),R=document.getElementById('curR');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;C.style.left=mx+'px';C.style.top=my+'px'});
+(function a(){rx+=(mx-rx)*.1;ry+=(my-ry)*.1;R.style.left=rx+'px';R.style.top=ry+'px';requestAnimationFrame(a)})();
+document.querySelectorAll('a,button,[onclick]').forEach(el=>{
+  el.addEventListener('mouseenter',()=>{C.style.width='18px';C.style.height='18px';R.style.width='44px';R.style.height='44px'});
+  el.addEventListener('mouseleave',()=>{C.style.width='10px';C.style.height='10px';R.style.width='32px';R.style.height='32px'});
+});
+
+// EMOJI FLAGS
+const EF={'Spain':'🇪🇸','France':'🇫🇷','Argentina':'🇦🇷','Brazil':'🇧🇷','England':'🏴󠁧󠁢󠁥󠁮󠁧󠁿','Germany':'🇩🇪','Portugal':'🇵🇹','Netherlands':'🇳🇱','Morocco':'🇲🇦','Belgium':'🇧🇪','Norway':'🇳🇴','Uruguay':'🇺🇾','Croatia':'🇭🇷','Switzerland':'🇨🇭','Colombia':'🇨🇴','Japan':'🇯🇵','Türkiye':'🇹🇷','Mexico':'🇲🇽','USA':'🇺🇸','Senegal':'🇸🇳','South Korea':'🇰🇷','Ecuador':'🇪🇨','Austria':'🇦🇹','Algeria':'🇩🇿','Czechia':'🇨🇿','South Africa':'🇿🇦','Canada':'🇨🇦','Scotland':'🏴󠁧󠁢󠁳󠁣󠁴󠁿','Haiti':'🇭🇹','Paraguay':'🇵🇾','Australia':'🇦🇺','Ghana':'🇬🇭','Panama':'🇵🇦','Bosnia & Herzegovina':'🇧🇦','Qatar':'🇶🇦','Saudi Arabia':'🇸🇦','Cape Verde':'🇨🇻','Egypt':'🇪🇬','Iran':'🇮🇷','New Zealand':'🇳🇿','Iraq':'🇮🇶','DR Congo':'🇨🇩','Uzbekistan':'🇺🇿','Sweden':'🇸🇪','Tunisia':'🇹🇳','Jordan':'🇯🇴','Ivory Coast':'🇨🇮','Curaçao':'🇨🇼'};
+const ef=t=>EF[t]||'🌍';
+
+const TEAMS=[
+  {rank:1,name:'Spain',pct:16.9,final:27.4,semi:40.7,qf:58.4,players:[['Lamine Yamal','Barcelona',9.4],['Rodri','Man City',9.1],['Pedri','Barcelona',8.9],['Raphinha','Barcelona',8.6],['Unai Simón','Athletic Bilbao',8.0]],note:"Euro 2024 champions. Yamal at 18 is generational. Rodri is the Ballon d'Or midfield anchor. Best defensive xG (0.78) in the tournament. Seeded on the bottom half of draw — Spain and Argentina cannot meet before the Final."},
+  {rank:2,name:'Argentina',pct:11.9,final:20.1,semi:31.9,qf:50.2,players:[['Federico Valverde','Real Madrid',9.0],['Julian Álvarez','Atlético Madrid',8.9],['Lautaro Martínez','Inter Milan',8.7],['Emiliano Martínez','Aston Villa',8.8],['Lionel Messi','Inter Miami',8.5]],note:"Reigning champions. Highest Elo (2060). Messi at 38 takes a fitness discount. Álvarez + Valverde in career-best form. Also seeded on bottom half — can only face Spain in the Final."},
+  {rank:3,name:'France',pct:11.8,final:19.9,semi:31.6,qf:49.3,players:[['Kylian Mbappé','Real Madrid',9.6],['Ousmane Dembélé','PSG',8.8],['William Saliba','Arsenal',8.7],['Michael Olise','Bayern Munich',8.5],['Désiré Doué','PSG',8.2]],note:"Won 2018, finalists 2022. Mbappé ranked #1 player. Seeded on the top half — potential final opponents to Spain. Cannot face England before the semifinals."},
+  {rank:4,name:'Brazil',pct:11.4,final:20.5,semi:34.7,qf:50.9,players:[['Vinicius Jr','Real Madrid',8.9],['Raphinha','Barcelona',8.8],['Rodrygo','Real Madrid',8.3],['Alisson','Liverpool',8.5],['Neymar','Al-Hilal',7.2]],note:"Most WC wins (5). Vinicius + Raphinha most dangerous wing duo. Top half of draw — potential QF opponent for France. Neymar's fitness remains critical uncertainty."},
+  {rank:5,name:'England',pct:8.1,final:14.2,semi:24.9,qf:43.8,players:[['Jude Bellingham','Real Madrid',9.2],['Harry Kane','Bayern Munich',9.1],['Bukayo Saka','Arsenal',8.9],['Declan Rice','Arsenal',8.6],['Phil Foden','Man City',8.4]],note:"Highest squad value (220). Top half of draw alongside France. Kane in golden boot form. Can face France in the QF — a potential blockbuster matchup the model gives France the edge."},
+  {rank:6,name:'Germany',pct:6.2,final:12.5,semi:22.6,qf:42.1,players:[['Jamal Musiala','Bayern Munich',9.0],['Florian Wirtz','Bayer Leverkusen',8.7],['Antonio Rüdiger','Real Madrid',8.5],['Manuel Neuer','Bayern Munich',7.9],['Thomas Müller','Bayern Munich',7.8]],note:"Easy Group E draw. Musiala + Wirtz generational pairing. Top half — potential QF opponent for Brazil. Highest historical penalty conversion (0.75)."},
+  {rank:7,name:'Portugal',pct:4.7,final:9.3,semi:17.7,qf:34.1,players:[['Bruno Fernandes','Man United',8.5],['João Neves','PSG',8.6],['Vitinha','PSG',8.4],['Rúben Dias','Man City',8.7],['Cristiano Ronaldo','Al-Nassr',7.5]],note:"Bottom half — potential QF opponent for Argentina. Ronaldo at 41 iconic but Neves/Vitinha carry the play. Likely Portugal vs Argentina in QF is the model's most anticipated match."},
+  {rank:8,name:'Netherlands',pct:4.1,final:8.8,semi:17.4,qf:33.3,players:[['Cody Gakpo','Liverpool',8.6],['Virgil van Dijk','Liverpool',8.8],['Xavi Simons','PSG',8.4],['Tijjani Reijnders','AC Milan',8.2],['Memphis Depay','Atlético Madrid',8.0]],note:"Top half draw. Group F (Sweden, Japan, Tunisia) navigable. Van Dijk leads elite defence. Gakpo in excellent form."},
+  {rank:9,name:'Morocco',pct:3.5,final:7.5,semi:16.0,qf:29.7,players:[['Achraf Hakimi','PSG',8.9],['Youssef En-Nesyri','Fenerbahçe',8.2],['Sofyan Amrabat','Man United',8.3],['Hakim Ziyech','Galatasaray',8.0],['Bono','Al-Hilal',8.1]],note:"2022 semifinalists. Hakimi world-class at PSG. Top half draw. Best defensive record among African teams."},
+  {rank:10,name:'Belgium',pct:3.3,final:7.8,semi:15.4,qf:29.1,players:[['Thibaut Courtois','Real Madrid',9.0],['Kevin De Bruyne','Man City',8.8],['Romelu Lukaku','Napoli',7.8],['Youri Tielemans','Aston Villa',8.0],['Axel Witsel','Atlético Madrid',7.5]],note:"Easiest group (G: Egypt, Iran, New Zealand). Bottom half draw — potential R16 opponent for Spain. De Bruyne + Courtois world-class but ageing golden generation."},
+  {rank:11,name:'Norway',pct:2.5,final:5.7,semi:13.3,qf:28.0,players:[['Erling Haaland','Man City',9.5],['Martin Ødegaard','Arsenal',8.7],['Alexander Sørloth','Atlético Madrid',8.0],['Sander Berge','Fulham',7.8],['Ørjan Nyland','Southampton',7.5]],note:"First WC in 24 years. Haaland most dangerous striker in tournament. Top half draw. If Norway get through group and R32, they face France's side."},
+  {rank:12,name:'Uruguay',pct:2.4,final:6.1,semi:14.2,qf:28.4,players:[['Federico Valverde','Real Madrid',9.0],['Darwin Núñez','Liverpool',8.4],['Ronald Araújo','Barcelona',8.5],['Rodrigo Bentancur','Tottenham',8.1],['José María Giménez','Atlético Madrid',8.2]],note:"Bottom half draw — faces Argentina in R32. Valverde world-class but this is a brutal first knockout game. Classic South American derby."},
+];
+
+const GROUPS=[
+  {n:'A',v:'Mexico City',teams:[['Mexico','w',41],['South Korea','r',30],['Czechia','t3',null],['South Africa',null,null]]},
+  {n:'B',v:'Toronto',teams:[['Switzerland','w',54],['Canada','r',32],['Bosnia & Herzegovina','t3',null],['Qatar',null,null]]},
+  {n:'C',v:'New York',teams:[['Brazil','w',61],['Morocco','r',44],['Scotland',null,null],['Haiti',null,null]]},
+  {n:'D',v:'Los Angeles',teams:[['Türkiye','w',38],['USA','r',30],['Australia','t3',null],['Paraguay',null,null]]},
+  {n:'E',v:'Houston',teams:[['Germany','w',65],['Ecuador','r',37],['Ivory Coast','t3',null],['Curaçao',null,null]]},
+  {n:'F',v:'Dallas',teams:[['Netherlands','w',46],['Japan','r',30],['Sweden','t3',null],['Tunisia',null,null]]},
+  {n:'G',v:'Seattle',teams:[['Belgium','w',63],['Egypt','r',32],['Iran','t3',null],['New Zealand',null,null]]},
+  {n:'H',v:'Atlanta',teams:[['Spain','w',70],['Uruguay','r',48],['Saudi Arabia',null,null],['Cape Verde',null,null]]},
+  {n:'I',v:'Boston',teams:[['France','w',61],['Norway','r',38],['Senegal','t3',null],['Iraq',null,null]]},
+  {n:'J',v:'Kansas City',teams:[['Argentina','w',74],['Austria','r',38],['Algeria','t3',null],['Jordan',null,null]]},
+  {n:'K',v:'Houston',teams:[['Portugal','w',57],['Colombia','r',41],['DR Congo',null,null],['Uzbekistan',null,null]]},
+  {n:'L',v:'Dallas',teams:[['England','w',64],['Croatia','r',44],['Ghana',null,null],['Panama',null,null]]},
+];
+
+const THIRDS=[
+  {t:'Ivory Coast',g:'E',p:72.3},{t:'Senegal',g:'I',p:70.0},
+  {t:'Iran',g:'G',p:65.1},{t:'Algeria',g:'J',p:64.8},
+  {t:'Bosnia & Herzegovina',g:'B',p:61.7},{t:'Czechia',g:'A',p:61.1},
+  {t:'Sweden',g:'F',p:60.4},{t:'Australia',g:'D',p:59.9},
+];
+const ELIM=[{t:'Scotland',g:'C'},{t:'DR Congo',g:'K'},{t:'Ghana',g:'L'},{t:'Saudi Arabia',g:'H'}];
+
+// TICKER
+function buildTicker(){
+  const items=['Spain 🇪🇸 16.9%','Argentina 🇦🇷 11.9%','France 🇫🇷 11.8%','Brazil 🇧🇷 11.4%','England 🏴󠁧󠁢󠁥󠁮󠁧󠁿 8.1%','Germany 🇩🇪 6.2%','Portugal 🇵🇹 4.7%','Netherlands 🇳🇱 4.1%','Morocco 🇲🇦 3.5%','Belgium 🇧🇪 3.3%','Norway 🇳🇴 2.5%','Uruguay 🇺🇾 2.4%','48 Teams · 12 Groups · 1 Champion','15,000 Simulations Run','Spain & Argentina on opposite sides of the draw'];
+  const d=[...items,...items];
+  document.getElementById('ttrack').innerHTML=d.map(i=>`<span class="titem">${i}</span>`).join('');
+}
+
+function buildFavs(){
+  const g=document.getElementById('favGrid'),mx2=TEAMS[0].pct;
+  g.innerHTML=TEAMS.map((t,i)=>`
+    <div class="fv r${t.rank<=3?t.rank:'n'}" onclick="openM('${t.name}')" data-r style="transition-delay:${i*.04}s">
+      <div class="ffz"><span class="ffe">${ef(t.name)}</span><div class="ffo"></div></div>
+      <div class="fbody">
+        <div class="frn"><span class="frank">${t.rank}</span><span class="fname">${t.name}</span></div>
+        <div class="fpct">${t.pct}%</div>
+        <div class="fbar"><div class="fbf" data-w="${(t.pct/mx2*100).toFixed(1)}%"></div></div>
+        <div class="fsub">Final: ${t.final}% · Semi: ${t.semi}% · QF: ${t.qf}%</div>
+      </div>
+      <div class="fhint">Full stats ↗</div>
+    </div>`).join('');
+}
+
+function buildGroups(){
+  document.getElementById('groupsGrid').innerHTML=GROUPS.map((g,gi)=>`
+    <div class="gc" data-r style="transition-delay:${gi*.035}s">
+      <div class="gch"><span class="gcl">Group ${g.n}</span><span class="gcv">${g.v}</span></div>
+      ${g.teams.map(([t,s,p],i)=>`
+        <div class="gr ${s==='w'?'w':s==='r'?'r':s==='t3'?'t3':''}">
+          <span class="gfe">${ef(t)}</span><span class="gpos">${i+1}</span>
+          <span class="gpip"></span><span class="gt">${t}</span>
+          <span class="gp">${p?p+'%':''}</span>
+        </div>`).join('')}
+    </div>`).join('');
+}
+
+function buildThirds(){
+  document.getElementById('thirdsGrid').innerHTML=THIRDS.map((t,i)=>`
+    <div class="tc" data-r style="transition-delay:${i*.05}s">
+      <span class="tce">${ef(t.t)}</span>
+      <div class="tcn">${t.t}</div><div class="tcg">Group ${t.g} · 3rd place advances</div>
+      <div class="tcp">${t.p}%</div>
+    </div>`).join('');
+  document.getElementById('elimTeams').innerHTML=ELIM.map(t=>`<div class="eit">${ef(t.t)} ${t.t} (Grp ${t.g})</div>`).join('');
+}
+
+// MODAL
+function openM(name){
+  const t=TEAMS.find(x=>x.name===name);if(!t)return;
+  document.getElementById('mContent').innerHTML=`
+    <div class="mhero"><div class="mflag">${ef(t.name)}</div>
+      <div class="mhi"><div class="mc">${t.name}</div><div class="mr">#${t.rank} · ${t.pct}% Win Probability</div></div>
+    </div>
+    <div class="mbody">
+      <div class="ms4">
+        <div class="ms"><div class="msv">${t.pct}%</div><div class="msl">Win</div></div>
+        <div class="ms"><div class="msv">${t.final}%</div><div class="msl">Final</div></div>
+        <div class="ms"><div class="msv">${t.semi}%</div><div class="msl">Semi</div></div>
+        <div class="ms"><div class="msv">${t.qf}%</div><div class="msl">QF</div></div>
+      </div>
+      <div class="msec">Key Players · Form (0–10)</div>
+      <div>${t.players.map(([n,c,r])=>`<div class="mp"><div><div class="mpn">${n}</div><div class="mpc">${c}</div></div><div class="mps">${r}</div></div>`).join('')}</div>
+      <div class="msec">Model Assessment</div>
+      <div class="mnote">${t.note}</div>
+    </div>`;
+  document.getElementById('mbg').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeMBg(e){if(e.target===document.getElementById('mbg'))closeM()}
+function closeM(){document.getElementById('mbg').classList.remove('open');document.body.style.overflow=''}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeM()});
+
+// SCROLL REVEAL
+const ro=new IntersectionObserver(e=>{e.forEach(x=>{if(x.isIntersecting){x.target.classList.add('in');ro.unobserve(x.target)}})},{threshold:.1,rootMargin:'0px 0px -28px 0px'});
+const bro=new IntersectionObserver(e=>{e.forEach(x=>{if(x.isIntersecting){x.target.querySelectorAll('.fbf').forEach(b=>{setTimeout(()=>b.style.width=b.dataset.w,100)});bro.unobserve(x.target)}})},{threshold:.2});
+
+buildTicker();buildFavs();buildGroups();buildThirds();
+setTimeout(()=>{
+  document.querySelectorAll('[data-r]').forEach(el=>ro.observe(el));
+  document.querySelectorAll('.fv').forEach(c=>bro.observe(c));
+},80);
+</script>
+</body>
+</html>
