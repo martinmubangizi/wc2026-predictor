@@ -97,7 +97,7 @@ where F_k is the predicted CDF and O_k is the observed CDF over the ordered outc
 pip install -r requirements.txt
 python predict.py --sims 15000
 
-Outputs to output/: predictions.json, predictions.csv, bracket.html
+Outputs to `output/`: `predictions.json`, `predictions.csv`, `bracket.html`
 
 
 ## References
