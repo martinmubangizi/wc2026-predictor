@@ -276,7 +276,7 @@ body{background:var(--wh);color:var(--obs);font-family:var(--FB)}
 
 @media(max-width:960px){
   html,body{overflow-x:hidden}
-  .hero{grid-template-columns:1fr;min-height:auto;overflow:hidden}.hslash{display:none}.hright{display:none}
+  .hero{grid-template-columns:1fr;min-height:auto;overflow:hidden}.hslash{display:none}.hright{min-height:auto;height:auto}
   .vote-grid{display:flex;flex-direction:column;gap:24px}
   .hleft{padding:88px 28px 56px}
   .sec{padding:48px 24px}.bracket-section{padding:48px 24px}
@@ -323,6 +323,8 @@ body{background:var(--wh);color:var(--obs);font-family:var(--FB)}
   .vote-input-row{flex-direction:column}
   .vote-input-row select,.vote-input-row button{width:100%}
   .vote-grid{grid-template-columns:1fr}
+  .hright{min-height:auto!important;height:auto!important}
+  .hero{min-height:auto!important}
 }
 </style>
 </head>
@@ -373,7 +375,7 @@ body{background:var(--wh);color:var(--obs);font-family:var(--FB)}
     <!-- Gradient overlay so text reads clearly -->
     <div style="position:absolute;inset:0;background:linear-gradient(to right,rgba(46,50,80,.7) 0%,rgba(46,50,80,.1) 100%)"></div>
     <!-- Winner info overlay -->
-    <div style="position:relative;z-index:2;padding:44px;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center">
+    <div style="position:relative;z-index:2;padding:clamp(20px,5vw,44px);width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center">
       <div style="font-family:var(--FU);font-size:10px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:16px">Predicted Champion</div>
       <div style="font-family:var(--FD);font-size:clamp(48px,5vw,80px);letter-spacing:2px;text-transform:uppercase;color:var(--wh);line-height:1;margin-bottom:8px">Spain 🇪🇸</div>
       <div style="font-family:var(--FU);font-size:13px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.6);margin-bottom:40px">16.9% Win Probability</div>
