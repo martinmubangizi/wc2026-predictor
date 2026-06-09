@@ -441,7 +441,20 @@ body{background:var(--wh);color:var(--obs);font-family:var(--FB)}
 <!-- GROUPS -->
 <div class="sdiv" id="groups">
   <div class="sdt pac">03</div><div class="sdnum">GROUP STAGE · 12 GROUPS</div>
-  <div class="sdline"></div><div class="sdright">🔴 Winner · ⚪ Runner-up · 🔵 Best 3rd</div>
+  <div class="sdline"></div><div class="sdright" style="display:flex;align-items:center;gap:16px">
+      <span style="display:flex;align-items:center;gap:6px">
+        <span style="width:8px;height:8px;border-radius:50%;background:var(--mg);flex-shrink:0;display:inline-block"></span>
+        <span style="font-family:var(--FU);font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.5)">Group Winner</span>
+      </span>
+      <span style="display:flex;align-items:center;gap:6px">
+        <span style="width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.6);flex-shrink:0;display:inline-block"></span>
+        <span style="font-family:var(--FU);font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.5)">Runner-up</span>
+      </span>
+      <span style="display:flex;align-items:center;gap:6px">
+        <span style="width:8px;height:8px;border-radius:50%;background:var(--pac);flex-shrink:0;display:inline-block"></span>
+        <span style="font-family:var(--FU);font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.5)">Best 3rd</span>
+      </span>
+    </div>
 </div>
 <section class="sec dark">
   <h2 class="sec-h2" data-r>48 Teams · 12 Groups</h2>
